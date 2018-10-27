@@ -1,96 +1,110 @@
-#!/usr/bin/env python
-
-import hashlib
 import time
+import sys
+from hashlib import md5, sha256, sha1, sha384, sha512
 
-open('output3.txt', 'w').close()    #removes data from previous runs
-open('output5.txt', 'w').close()
 start_time = time.time()
 
-filter1 = []
-filter2 = []
-for i in range(3000000):
-    filter1.append(0)
-    filter2.append(0)
+f1 = []
+f2 = []
 
 
-with open('dictionary.txt') as f:
-    #next(f)
+arg_d = ""
+arg_i = ""
+arg_o1 = ""
+arg_o2 = ""
+
+
+for j in range(len(sys.argv)):
+    if (sys.argv[j])[0] == '-':
+        if (sys.argv[j])[1] == 'd':
+            arg_d = sys.argv[j + 1]
+        elif (sys.argv[j])[1] == 'i':
+            arg_i = sys.argv[j + 1]
+        elif (sys.argv[j])[1] == 'o':
+            arg_o1 = sys.argv[j + 1]
+            arg_o2 = sys.argv[j + 2]
+
+for i in range(4000000):
+    f1.append(0)
+    f2.append(0)
+
+def index(hash):
+    place = int(hash.hexdigest(), 16)
+    place = place % 4000000
+    f1[place] = 1
+    f2[place] = 1
+    
+def inputhash(hash):
+    place = int(hash.hexdigest(), 16)
+    place = place % 4000000
+    return place
+
+
+
+
+
+
+with open(arg_d) as f:
+
     count = 0
     for line in f:
-        line.strip('\n')            #strip newlines
-        hash1 = hashlib.md5(line.encode())      #3 hashes for first filter
-        hash2 = hashlib.sha256(line.encode())   #need to encode to get proper hash
-        hash3 = hashlib.sha1(line.encode())
-        hash4 = hash(line)                      #default python hash function
-        hash5 = hashlib.blake2b(line.encode())
+        line.strip('\n')
+        hash1 = sha256(line)
+        hash2 = md5(line)
+        hash3 = sha1(line)
+        hash4 = sha384(line)
+        hash5 = sha512(line)
 
-        pos = int(hash1.hexdigest(), 16)        #setting bits in both filters
-        pos = pos % 3000000
-        filter1[pos] = 1
-        filter2[pos] = 1
+        #Index dictionary
+        index(hash1)
+        index(hash2)
+        index(hash3)
+        index(hash4)
+        index(hash5)
 
-        pos = int(hash2.hexdigest(), 16)
-        pos = pos % 3000000
-        filter1[pos] = 1
-        filter2[pos] = 1
+    print("Indexed after %s seconds " % (time.time() - start_time))
 
-        pos = int(hash3.hexdigest(), 16)
-        pos = pos % 3000000
-        filter1[pos] = 1
-        filter2[pos] = 1
+    
+#Comparison
 
-        pos = hash4 % 3000000
-        filter2[pos] = 1
-
-        pos = int(hash5.hexdigest(), 16)
-        pos = pos % 3000000
-        filter2[pos] = 1
-
-    #out = open('test.txt', 'w')
-    #out.write(str(filter1))
-    print("--- %s seconds ---" % (time.time() - start_time))
-
-#Bloom filters have been created, now to compare sample input
-
-with open('sample_input.txt') as f:
-    next(f)                         #need to skip first line
+with open(arg_i) as f:
+    next(f)                        
     for line in f:
-        line.strip('\n')            #strip newlines and hash to compare
-        hash1 = hashlib.md5(line.encode())
-        hash2 = hashlib.sha256(line.encode())
-        hash3 = hashlib.sha1(line.encode())
-        hash4 = hash(line)
-        hash5 = hashlib.blake2b(line.encode())
+        line.strip('\n')
+        hash1 = sha256(line)
+        hash2 = md5(line)
+        hash3 = sha1(line)
+        hash4 = sha384(line)
+        hash5 = sha512(line)
 
-        pos1 = int(hash1.hexdigest(), 16)
-        pos1 = pos1 % 3000000
+        place1 = inputhash(hash1)
+        print("sha256: %s seconds " % (time.time() - start_time))
+        place2 = inputhash(hash2)
+        print("md5: %s seconds " % (time.time() - start_time))
+        place3 = inputhash(hash3)
+        print("sha1: %s seconds " % (time.time() - start_time))
 
-        pos2 = int(hash2.hexdigest(), 16)
-        pos2 = pos2 % 3000000
+        #FIRST FILTER
+        out = open(arg_o1, 'a')
 
-        pos3 = int(hash3.hexdigest(), 16)
-        pos3 = pos3 % 3000000
-        out = open('output3.txt', 'a')  #check first filter, write result
-
-        if filter1[pos1] == 1 or filter1[pos2] == 1 or filter1[pos3] == 1:
+        if f1[place1] == 1 and f1[place2] == 1 and f1[place3] == 1:
             out.write('maybe\n')
         else:
             out.write('no\n')
         out.close()
 
+        place4 = inputhash(hash4)
+        print("sha384: %s seconds " % (time.time() - start_time))
+        place5 = inputhash(hash5)
+        print("sha512: %s seconds " % (time.time() - start_time))
 
-        pos4 = hash4 % 3000000      #additional hashes for filter 2
+        #SECOND FILTER
+        out = open(arg_o2, 'a')
 
-        pos5 = int(hash5.hexdigest(), 16)
-        pos5 = pos5 % 3000000
-
-        out = open('output5.txt', 'a')  #check second filter, write result
-
-        if filter2[pos1] == 1 or filter2[pos2] == 1 or filter2[pos3] == 1 or filter2[pos4] == 1 or filter2[pos5] == 1:
+        if f2[place1] == 1 and f2[place2] == 1 and f2[place3] == 1 and f2[place4] == 1 and f2[place5] == 1:
             out.write('maybe\n')
         else:
             out.write('no\n')
         out.close()
 
-print("--- %s seconds ---" % (time.time() - start_time))
+print("Compared after %s seconds" % (time.time() - start_time))
