@@ -1,26 +1,39 @@
-FILENAME = paper1
+TEXFN=writing-assign-one
 
-make:
-	rm -f ${FILENAME}.pdf
-	latex ${FILENAME}
-	bibtex ${FILENAME}
-	latex ${FILENAME}
-	latex ${FILENAME}
-	dvips ${FILENAME}.dvi
-	ps2pdf ${FILENAME}.ps
-	rm -f ${FILENAME}.aux
-	rm -f ${FILENAME}.dvi
-	rm -f ${FILENAME}.log
-	rm -f ${FILENAME}.ps
-	rm -f ${FILENAME}.bbl
-	rm -f ${FILENAME}.blg
-	echo "PDF is complete."
+all: pdf
 
-clean:
-	rm -f ${FILENAME}.pdf
-	rm -f ${FILENAME}.aux
-	rm -f ${FILENAME}.dvi
-	rm -f ${FILENAME}.log
-	rm -f ${FILENAME}.ps
-	rm -f ${FILENAME}.bbl
-	rm -f ${FILENAME}.blg
+dvi: ${TEXFN}.tex
+	latex $(TEXFN).tex
+	#bibtex $(TEXFN)
+	latex $(TEXFN).tex
+
+ps: dvi
+	dvips -R -Poutline -t letter ${TEXFN}.dvi -o ${TEXFN}.ps
+
+pdf: ps
+	ps2pdf ${TEXFN}.ps
+	rm -f ${TEXFN}.aux
+	rm -f ${TEXFN}.log
+	rm -f ${TEXFN}.dvi
+	rm -f ${TEXFN}.out
+	rm -f ${TEXFN}.ps
+	rm -f $(TEXFN).toc
+	rm -f coe*.pdf
+	rm -f *.gz
+clean-dvi:
+	rm -f ${TEXFN}.aux
+	rm -f ${TEXFN}.log
+	rm -f ${TEXFN}.dvi
+	rm -f ${TEXFN}.out
+	rm -f ${TEXFN}.toc
+	rm -f ${TEXFN}.blg
+	rm -f ${TEXFN}.bbl
+
+clean-ps: clean-dvi
+	rm -f ${TEXFN}.ps
+	rm -f coe*.pdf
+	rm -f *.gz
+clean-pdf: clean-ps
+	rm -f ${TEXFN}.pdf
+
+clean: clean-pdf
