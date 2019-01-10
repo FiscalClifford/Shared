@@ -1,5 +1,0 @@
-http://web.engr.oregonstate.edu/~gilesbr/books/index.html
-
---LOGIN--
-username: forTA
-password: password1
